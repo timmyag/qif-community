@@ -7,6 +7,7 @@ using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Serialization;
 using qif30;
+using QIFdotNET;
 
 namespace QifStructureReader1
 {
@@ -589,8 +590,13 @@ namespace QifStructureReader1
 						qifDoc.Results.MeasurementResultsSet.MeasurementResults != null &&
 						qifDoc.Results.MeasurementResultsSet.MeasurementResults.Length > 0)
 					{
-						// begin our DMIS results file
-						string dmisoutput = "FILNAM/'"; // this needs to be the first statement in a DMIS results file
+
+                        //list of characteristics
+                        List<Characteristic> characteristics = new List<Characteristic>();
+
+
+                        // begin our DMIS results file
+                        string dmisoutput = "FILNAM/'"; // this needs to be the first statement in a DMIS results file
 						dmisoutput += Path.GetFileNameWithoutExtension(openFileDialog1.FileName) + "',5.3" + Environment.NewLine; // the name of the QIF document we loaded + DMIS version number
 						// add some application identifying information
 						dmisoutput += "$$ Digital Metrology Standards Consortium (DMSC))" + Environment.NewLine;
@@ -659,9 +665,14 @@ namespace QifStructureReader1
 																measResults.MeasuredFeatures.FeatureMeasurement[i].GetType());
 															if (circNom != null && circDef != null && circAct != null) // should never happen, so it will
 															{
-																// we have a matched set of circle aspects
-																// compose the feature nominal label
-																string flabel = "F(" + qifDoc.Features.FeatureItems.FeatureItem[j].FeatureName + ")"; // F(CIRC1) for example
+                                                                //the charicteristics we will output
+                                                                Characteristic characteristic = new Characteristic();
+                                                                characteristic.type = Characteristic.Type.CircleFeature;
+                                                                characteristic.name = qifDoc.Features.FeatureItems.FeatureItem[j].FeatureName;
+
+                                                                // we have a matched set of circle aspects
+                                                                // compose the feature nominal label
+                                                                string flabel = "F(" + qifDoc.Features.FeatureItems.FeatureItem[j].FeatureName + ")"; // F(CIRC1) for example
 																// compose the feature actual label
 																string falabel = "FA(" + qifDoc.Features.FeatureItems.FeatureItem[j].FeatureName + ")"; // FA(CIRC1) for example
 																// begin composing the nominal feature definition F(CIRC1)=FEAT/CIRCLE...
@@ -682,8 +693,12 @@ namespace QifStructureReader1
 																// cartesian
 																f += ",CART";
 																fa += ",CART";
-																// nominal xyz location
-																double[] location = Array.ConvertAll(circNom.Location.Text.Split(' '), new Converter<string, double>(Double.Parse));
+
+                                                                characteristic.lable = flabel;
+
+
+                                                                // nominal xyz location
+                                                                double[] location = Array.ConvertAll(circNom.Location.Text.Split(' '), new Converter<string, double>(Double.Parse));
 																if (location.Length == 3) // should always be 3
 																{
 																	f += "," + location[0].ToString() + "," + location[1].ToString() + "," + location[2].ToString();
