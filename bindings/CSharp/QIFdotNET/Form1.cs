@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.Xml;
-using System.Xml.Serialization;
 using qif30;
 using QIFdotNET;
+using ServiceStack.Text;
 
 namespace QifStructureReader1
 {
@@ -136,7 +136,7 @@ namespace QifStructureReader1
 		//
 		// The datum reference frame definition list is traversed looking for the specified id, datum precidence and materal condition
 		// are found and combined with the datum label found by traversing the datum definition list
-		private void GetTolerances(QIFDocumentType qifDoc, long actfeatid, ref string tlabels, ref string talabels, ref string tdefs, ref string tadefs)
+		private void GetTolerances(QIFDocumentType qifDoc, long actfeatid, ref string tlabels, ref string talabels, ref string tdefs, ref string tadefs,ref decimal hitol, ref decimal lotol, ref decimal actual, ref string status)
 		{
 			// make sure we have(optional) characteristics and measurements
 			if (qifDoc.Characteristics == null ||
@@ -196,7 +196,11 @@ namespace QifStructureReader1
 										ref talabels,
 										ref tdefs,
 										ref tadefs,
-										diaAct,
+                                        ref hitol,
+                                        ref lotol,
+                                        ref actual,
+                                        ref status,
+                                        diaAct,
 										diaItem,
 										diaNom,
 										diaDef);
@@ -451,6 +455,10 @@ namespace QifStructureReader1
 			ref string talabels,
 			ref string tdefs,
 			ref string tadefs,
+			ref decimal hitol,
+			ref decimal lotol,
+			ref decimal actual,
+			ref string status,
 			DiameterCharacteristicMeasurementType diaAct,
 			DiameterCharacteristicItemType diaItem,
 			DiameterCharacteristicNominalType diaNom,
@@ -471,9 +479,6 @@ namespace QifStructureReader1
 				var diaTol = (LinearToleranceType)Convert.ChangeType(diaDef.Item, diaDef.Item.GetType());
 				if (diaTol != null)
 				{
-					// just min, just max, or both min+max may be defined in QIF, DMIS needs both
-					decimal hitol = 0;
-					decimal lotol = 0;
 					// because both min and max are objects of the same type, this clunky method is used to figure out who is who
 					for (int t = 0; t < diaTol.ItemsElementName.Length; t++)
 					{
@@ -488,44 +493,18 @@ namespace QifStructureReader1
 							if (diaMin != null) lotol = diaMin.Value;
 						}
 					}
-					if (diaTol.DefinedAsLimit) // limit specification?
-					{
-						// DMIS doesn't support limit tolerance for diameter
-						if (diaNom.TargetValue != null) // do we have a target value?
-						{
-							// convert min and max from limit to +/- tols
-							hitol = hitol - diaNom.TargetValue.Value;
-							lotol = lotol - diaNom.TargetValue.Value;
-						}
-						else
-						{
-							// assume target is between limits
-							decimal diam = (hitol + lotol) / 2;
-							hitol = hitol - diam;
-							lotol = lotol - diam;
-						}
-					}
-					// compose the nominal DMIS tolerance label T(DIAM1)
-					tlabels += ",T(" + diaItem.Name + ")";
-					// compose the nominal DMIS tolerance T(DIAM1)=TOL/DIAM,-.1,.1
-					tdefs += "T(" + diaItem.Name + ")=TOL/DIAM," + lotol.ToString() + "," + hitol.ToString() + Environment.NewLine;
+					
+					//Get the actual value
 					if (diaAct.Value != null)
 					{
-						// compose the actual DMIS tolerance label TA(DIAM1)
-						talabels += ",TA(" + diaItem.Name + ")";
-						// compose the actual DMIS tolerance TA(DIAM1)=TOL/DIAM,-.05,INTOL
-						tadefs += "TA(" + diaItem.Name + ")=TOL/DIAM," + diaAct.Value.Value.ToString();
+
+						actual = diaAct.Value.Value;
+						
 						if (diaAct.Status.Item is CharacteristicStatusEnumType) // we are only going to handle the enumeration
 						{
-							var status = (CharacteristicStatusEnumType)Convert.ChangeType(diaAct.Status.Item, diaAct.Status.Item.GetType());
-							if (status == CharacteristicStatusEnumType.PASS)
-								tadefs += ",INTOL";
-							else
-								tadefs += ",OUTOL"; // if we don't it's in, assume it's out
+							status = ((CharacteristicStatusEnumType)Convert.ChangeType(diaAct.Status.Item, diaAct.Status.Item.GetType())).ToString();
 						}
-						else
-							tadefs += ",OUTOL"; // if we don't it's in, assume it's out
-						tadefs += Environment.NewLine;
+				
 					}
 				}
 			}
@@ -561,9 +540,12 @@ namespace QifStructureReader1
 			{
 				QIFDocumentType qifDoc; // QIF objects (eventually)
 
-				bool breakout = false;
+                //list of characteristics
+                List<Characteristic> characteristics = new List<Characteristic>();
 
-				var serializer = new XmlSerializer(typeof(QIFDocumentType));
+                bool breakout = false;
+
+				var serializer = new System.Xml.Serialization.XmlSerializer(typeof(QIFDocumentType));
 
 				// set up file open dialog
 				OpenFileDialog openFileDialog1 = new OpenFileDialog();
@@ -591,19 +573,30 @@ namespace QifStructureReader1
 						qifDoc.Results.MeasurementResultsSet.MeasurementResults.Length > 0)
 					{
 
-                        //list of characteristics
-                        List<Characteristic> characteristics = new List<Characteristic>();
+						var Traceability = qifDoc.Results.MeasurementResultsSet.MeasurementResults.First().InspectionTraceability.Attributes.Attribute??null;
+						var TraceString = Traceability.Cast<AttributeStrType>();
+
+						
+                        Characteristic DefaultCharacteristic = new Characteristic();
+						DefaultCharacteristic.Part_Description = (from t in TraceString where t.name.Contains("Part Description") select t.value).FirstOrDefault().Split(':').LastOrDefault();
+                        DefaultCharacteristic.Program_version = (from t in TraceString where t.name.Contains("Program version") select t.value).FirstOrDefault().Split(':').LastOrDefault();
+                        DefaultCharacteristic.Program_Standard = (from t in TraceString where t.name.Contains("Program Standard") select t.value).FirstOrDefault().Split(':').LastOrDefault();
+                        DefaultCharacteristic.Drawing_Number = (from t in TraceString where t.name.Contains("Drawing Number") select t.value).FirstOrDefault().Split(':').LastOrDefault();
+                        DefaultCharacteristic.Drawing_Issue = (from t in TraceString where t.name.Contains("Drawing Issue") select t.value).FirstOrDefault().Split(':').LastOrDefault();
+                        DefaultCharacteristic.Drawing_Title = (from t in TraceString where t.name.Contains("Drawing Title") select t.value).FirstOrDefault().Split(':').LastOrDefault();
+                        DefaultCharacteristic.Program_Type = (from t in TraceString where t.name.Contains("Program Type") select t.value).FirstOrDefault().Split(':').LastOrDefault();
+                        DefaultCharacteristic.CMM_Number = (from t in TraceString where t.name.Contains("CMM Number") select t.value).FirstOrDefault().Split(':').LastOrDefault();
+                        DefaultCharacteristic.Comment = (from t in TraceString where t.name.Contains("Comment") select t.value).FirstOrDefault().Split(':').LastOrDefault();
+                        DefaultCharacteristic.Date = (from t in TraceString where t.name.Contains("DATE") select t.value).FirstOrDefault();
+                        DefaultCharacteristic.Programme_Run_Time = (from t in TraceString where t.name.Contains("TIME") select t.value).FirstOrDefault().Split(':').LastOrDefault();
+
+
 
 
                         // begin our DMIS results file
                         string dmisoutput = "FILNAM/'"; // this needs to be the first statement in a DMIS results file
 						dmisoutput += Path.GetFileNameWithoutExtension(openFileDialog1.FileName) + "',5.3" + Environment.NewLine; // the name of the QIF document we loaded + DMIS version number
-						// add some application identifying information
-						dmisoutput += "$$ Digital Metrology Standards Consortium (DMSC))" + Environment.NewLine;
-						dmisoutput += "$$ This DMIS results file produced from QIF document:" + Environment.NewLine;
-						dmisoutput += "$$   " + openFileDialog1.FileName + Environment.NewLine;
-						dmisoutput += "$$ with DMSC's open source QIFdotNET application written in C#" + Environment.NewLine;
-						dmisoutput += "$$ using XML schema source code bindings created by Microsoft's XSD tool" + Environment.NewLine;
+			
 						// get our units
 						dmisoutput += "UNITS/";
 						string units = "METER"; // QIF units are SI units until we learn differently
@@ -666,9 +659,10 @@ namespace QifStructureReader1
 															if (circNom != null && circDef != null && circAct != null) // should never happen, so it will
 															{
                                                                 //the charicteristics we will output
-                                                                Characteristic characteristic = new Characteristic();
+                                                                Characteristic characteristic = new Characteristic(DefaultCharacteristic);
                                                                 characteristic.type = Characteristic.Type.CircleFeature;
                                                                 characteristic.name = qifDoc.Features.FeatureItems.FeatureItem[j].FeatureName;
+
 
                                                                 // we have a matched set of circle aspects
                                                                 // compose the feature nominal label
@@ -683,82 +677,90 @@ namespace QifStructureReader1
 																if (circDef.InternalExternal == InternalExternalEnumType.EXTERNAL)
 																{
 																	f += ",OUTER";
-																	fa += ",OUTER";
+																
 																}
 																else // assume INNER, DMIS doesn't have a not-applicable option
 																{
 																	f += ",INNER";
-																	fa += ",INNER";
+								
 																}
 																// cartesian
 																f += ",CART";
-																fa += ",CART";
-
-                                                                characteristic.lable = flabel;
-
+																
+                                                                characteristic.lable = f;
 
                                                                 // nominal xyz location
-                                                                double[] location = Array.ConvertAll(circNom.Location.Text.Split(' '), new Converter<string, double>(Double.Parse));
+                                                                decimal[] location = Array.ConvertAll(circNom.Location.Text.Split(' '), new Converter<string, decimal>(decimal.Parse));
 																if (location.Length == 3) // should always be 3
 																{
-																	f += "," + location[0].ToString() + "," + location[1].ToString() + "," + location[2].ToString();
-																	if (circAct.Location == null) fa += "," + location[0].ToString() + "," + location[1].ToString() + "," + location[2].ToString(); // no actual, assume nominal
-																}
-																else
+                                                                    // nominal xyz location
+                                                                    characteristic.nominal_location_x = location[0];
+                                                                    characteristic.nominal_location_y = location[1];
+                                                                    characteristic.nominal_location_z = location[2];
+                                                                }
+	
+
+                                                                // actual xyz location
+                                                                if (circAct.Location != null)
 																{
-																	f += ",0,0,0";
-																	if (circAct.Location == null) fa += ",0,0,0";
-																}
-																// actual xyz location
-																if (circAct.Location != null)
-																{
-																	double[] actlocation = Array.ConvertAll(circAct.Location.Text.Split(' '), new Converter<string, double>(Double.Parse));
-																	if (actlocation.Length == 3) fa += "," + actlocation[0].ToString() + "," + actlocation[1].ToString() + "," + actlocation[2].ToString();
-																	else fa += ",0,0,0";
-																}
-																// nominal ijk vector
-																double[] normal = Array.ConvertAll(circNom.Normal.Text.Split(' '), new Converter<string, double>(Double.Parse));
-																if (normal.Length == 3) // should always be 3
-																{
-																	f += "," + normal[0].ToString() + "," + normal[1].ToString() + "," + normal[2].ToString();
-																	if (circAct.Normal == null) fa += "," + normal[0].ToString() + "," + normal[1].ToString() + "," + normal[2].ToString(); // no actual, assume nominal
-																}
-																else
-																{
-																	f += ",0,0,1";
-																	if (circAct.Normal == null) fa += ",0,0,1";
-																}
-																// actual ijk vector
-																if (circAct.Normal != null)
-																{
-																	double[] actnormal = Array.ConvertAll(circAct.Normal.Text.Split(' '), new Converter<string, double>(Double.Parse));
-																	if (actnormal.Length == 3) fa += "," + actnormal[0].ToString() + "," + actnormal[1].ToString() + "," + actnormal[2].ToString();
-																	else fa += ",0,0,1";
-																}
+																	decimal[] actlocation = Array.ConvertAll(circAct.Location.Text.Split(' '), new Converter<string, decimal>(decimal.Parse));
+																	if (actlocation.Length == 3)
+                                                                    {                                                                         // actual xyz location
+                                                                        characteristic.actual_location_x = actlocation[0];
+                                                                        characteristic.actual_location_y = actlocation[1];
+                                                                        characteristic.actual_location_z = actlocation[2];
+                                                                    }
+
+                                                                }
+
+																//// nominal ijk vector
+																//decimal[] normal = Array.ConvertAll(circNom.Normal.Text.Split(' '), new Converter<string, decimal>(decimal.Parse));
+																//if (normal.Length == 3) // should always be 3
+																//{
+																//	f += "," + normal[0].ToString() + "," + normal[1].ToString() + "," + normal[2].ToString();
+																//	if (circAct.Normal == null) fa += "," + normal[0].ToString() + "," + normal[1].ToString() + "," + normal[2].ToString(); // no actual, assume nominal
+																//}
+																//else
+																//{
+																//	f += ",0,0,1";
+																//	if (circAct.Normal == null) fa += ",0,0,1";
+																//}
+																//// actual ijk vector
+																//if (circAct.Normal != null)
+																//{
+																//	decimal[] actnormal = Array.ConvertAll(circAct.Normal.Text.Split(' '), new Converter<string, decimal>(decimal.Parse));
+																//	if (actnormal.Length == 3) fa += "," + actnormal[0].ToString() + "," + actnormal[1].ToString() + "," + actnormal[2].ToString();
+																//	else fa += ",0,0,1";
+																//}
+
 																// diameter and new line
-																f += "," + circDef.Diameter.Value.ToString() + Environment.NewLine;
-																if (circAct.Diameter == null) fa += "," + circDef.Diameter.Value.ToString() + Environment.NewLine;
-																else fa += "," + circAct.Diameter.Value.ToString() + Environment.NewLine;
+																
+																if (circAct.Diameter != null) characteristic.nominal = circAct.Diameter.Value;
+																
 																// grab tolerances
 																string tlabels = "";
 																string talabels = "";
 																string tdefs = "";
 																string tadefs = "";
-																GetTolerances(qifDoc, measResults.MeasuredFeatures.FeatureMeasurement[i].id, ref tlabels, ref talabels, ref tdefs, ref tadefs);
+                                                                decimal hitol = 0;
+                                                                decimal lotol = 0;
+                                                                decimal actual = 0;
+                                                                string status = "";
+                                                                GetTolerances(qifDoc, measResults.MeasuredFeatures.FeatureMeasurement[i].id, ref tlabels, ref talabels, ref tdefs, ref tadefs,ref hitol, ref lotol,ref actual, ref status);
 																// output this feature
-																dmisoutput += Environment.NewLine + "$$ Circle nominal " + qifDoc.Features.FeatureItems.FeatureItem[j].FeatureName + Environment.NewLine;
-																dmisoutput += "OUTPUT/" + flabel + tlabels + Environment.NewLine; // OUTPUT/FA(CIRC1),TA(DIAM1),TA(POS1)
-																dmisoutput += f; // F(CIRC1)=FEAT/CIRCLE,INNER,CART,0,0,0,0,0,1,12
-																dmisoutput += tdefs;
-																dmisoutput += "$$ Circle actual " + qifDoc.Features.FeatureItems.FeatureItem[j].FeatureName + Environment.NewLine;
-																dmisoutput += "OUTPUT/" + falabel + talabels + Environment.NewLine; // OUTPUT/FA(CIRC1),TA(DIAM1),TA(POS1)
-																dmisoutput += fa; // F(CIRC1)=FEAT/CIRCLE,INNER,CART,0,0,0,0,0,1,12
-																dmisoutput += tadefs;
+						
+																characteristic.hitol = hitol;
+																characteristic.lotol = lotol;
+																characteristic.actual = actual;
+																characteristic.status = status;
+
 																// am I a datum?
 																string datdef = "";
 																GetDatumDefinitions(qifDoc, qifDoc.Features.FeatureNominals.FeatureNominal[k].id, falabel, ref datdef);
 																dmisoutput += datdef;
-															}
+
+																characteristics.Add(characteristic);	
+                                                            }
 														}
 														else if (measResults.MeasuredFeatures.FeatureMeasurement[i] is CylinderFeatureMeasurementType &&
 														   qifDoc.Features.FeatureItems.FeatureItem[j] is CylinderFeatureItemType &&
@@ -843,7 +845,12 @@ namespace QifStructureReader1
 																string talabels = "";
 																string tdefs = "";
 																string tadefs = "";
-																GetTolerances(qifDoc, measResults.MeasuredFeatures.FeatureMeasurement[i].id, ref tlabels, ref talabels, ref tdefs, ref tadefs);
+                                                                decimal hitol = 0;
+                                                                decimal lotol = 0;
+                                                                decimal actual = 0;
+                                                                string status = "";
+
+                                                                GetTolerances(qifDoc, measResults.MeasuredFeatures.FeatureMeasurement[i].id, ref tlabels, ref talabels, ref tdefs, ref tadefs, ref hitol, ref lotol, ref actual, ref status);
 																// output this feature
 																dmisoutput += Environment.NewLine + "$$ Cylinder nominal " + qifDoc.Features.FeatureItems.FeatureItem[j].FeatureName + Environment.NewLine;
 																dmisoutput += "OUTPUT/" + flabel + tlabels + Environment.NewLine;
@@ -927,7 +934,11 @@ namespace QifStructureReader1
 																string talabels = "";
 																string tdefs = "";
 																string tadefs = "";
-																GetTolerances(qifDoc, measResults.MeasuredFeatures.FeatureMeasurement[i].id, ref tlabels, ref talabels, ref tdefs, ref tadefs);
+                                                                decimal hitol = 0;
+                                                                decimal lotol = 0;
+                                                                decimal actual = 0;
+                                                                string status = "";
+                                                                GetTolerances(qifDoc, measResults.MeasuredFeatures.FeatureMeasurement[i].id, ref tlabels, ref talabels, ref tdefs, ref tadefs, ref hitol, ref lotol, ref actual, ref status);
 																// output this feature
 																dmisoutput += Environment.NewLine + "$$ Plane nominal " + qifDoc.Features.FeatureItems.FeatureItem[j].FeatureName + Environment.NewLine;
 																dmisoutput += "OUTPUT/" + flabel + tlabels + Environment.NewLine;
@@ -964,8 +975,13 @@ namespace QifStructureReader1
 						// launch the dialog box
 						if (saveDMISFileDialog1.ShowDialog() == DialogResult.OK)
 						{
-							// write the document
-							System.IO.File.WriteAllText(saveDMISFileDialog1.FileName, dmisoutput);
+                            JsConfig.Init(new Config
+                            {
+                                IncludePublicFields = true
+                            });
+							string thing = CsvSerializer.SerializeToCsv<Characteristic>(characteristics);
+                            // write the document
+                            System.IO.File.WriteAllText(saveDMISFileDialog1.FileName, thing);
 							// lets have a look
 							System.Diagnostics.Process.Start("notepad.exe", saveDMISFileDialog1.FileName);
 						}
@@ -2735,7 +2751,7 @@ namespace QifStructureReader1
 				if (saveFileDialog1.ShowDialog() == DialogResult.OK)
 				{
 					// write the document
-					var xmlserializer = new XmlSerializer(typeof(QIFDocumentType));
+					var xmlserializer = new System.Xml.Serialization.XmlSerializer(typeof(QIFDocumentType));
 					TextWriter putstream = new StreamWriter(saveFileDialog1.FileName);
 					xmlserializer.Serialize(putstream, qifdoc);
 					putstream.Close();

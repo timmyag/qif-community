@@ -1,19 +1,112 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "C:\\Users\\tguiv\\source\\repos\\qif-community2\\bindings\\CSharp\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{3EA3B547-5012-4DCD-B161-44FE2EB60BF3}|QIFdotNET\\QIFdotNET.csproj|c:\\users\\tguiv\\source\\repos\\qif-community2\\bindings\\csharp\\qifdotnet\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3EA3B547-5012-4DCD-B161-44FE2EB60BF3}|QIFdotNET\\QIFdotNET.csproj|solutionrelative:qifdotnet\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3EA3B547-5012-4DCD-B161-44FE2EB60BF3}|QIFdotNET\\QIFdotNET.csproj|c:\\users\\tguiv\\source\\repos\\qif-community2\\bindings\\csharp\\qifdotnet\\characteristic.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3EA3B547-5012-4DCD-B161-44FE2EB60BF3}|QIFdotNET\\QIFdotNET.csproj|solutionrelative:qifdotnet\\characteristic.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3EA3B547-5012-4DCD-B161-44FE2EB60BF3}|QIFdotNET\\QIFdotNET.csproj|C:\\Users\\tguiv\\source\\repos\\qif-community2\\bindings\\CSharp\\qifdotnet\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3EA3B547-5012-4DCD-B161-44FE2EB60BF3}|QIFdotNET\\QIFdotNET.csproj|solutionrelative:qifdotnet\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3EA3B547-5012-4DCD-B161-44FE2EB60BF3}|QIFdotNET\\QIFdotNET.csproj|C:\\Users\\tguiv\\source\\repos\\qif-community2\\bindings\\CSharp\\qifdotnet\\qifdocument.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3EA3B547-5012-4DCD-B161-44FE2EB60BF3}|QIFdotNET\\QIFdotNET.csproj|solutionrelative:qifdotnet\\qifdocument.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{3EA3B547-5012-4DCD-B161-44FE2EB60BF3}|QIFdotNET\\QIFdotNET.csproj|C:\\Users\\tguiv\\source\\repos\\qif-community2\\bindings\\CSharp\\qifdotnet\\form1.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3EA3B547-5012-4DCD-B161-44FE2EB60BF3}|QIFdotNET\\QIFdotNET.csproj|solutionrelative:qifdotnet\\form1.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
       "VerticalTabListWidth": 256,
       "DocumentGroups": [
         {
-          "DockedWidth": 200,
-          "SelectedChildIndex": -1,
+          "DockedWidth": 249,
+          "SelectedChildIndex": 2,
           "Children": [
             {
               "$type": "Bookmark",
+              "Name": "ST:128:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
               "Name": "ST:0:0:{e5c86464-96be-4d7c-9a8b-abcb3bbf5f92}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Form1.cs",
+              "DocumentMoniker": "C:\\Users\\tguiv\\source\\repos\\qif-community2\\bindings\\CSharp\\QIFdotNET\\Form1.cs",
+              "RelativeDocumentMoniker": "QIFdotNET\\Form1.cs",
+              "ToolTip": "C:\\Users\\tguiv\\source\\repos\\qif-community2\\bindings\\CSharp\\QIFdotNET\\Form1.cs",
+              "RelativeToolTip": "QIFdotNET\\Form1.cs",
+              "ViewState": "AgIAAGQCAAAAAAAAAAAswLICAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-10-14T17:42:24.272Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "QIFDocument.cs",
+              "DocumentMoniker": "C:\\Users\\tguiv\\source\\repos\\qif-community2\\bindings\\CSharp\\QIFdotNET\\QIFDocument.cs",
+              "RelativeDocumentMoniker": "QIFdotNET\\QIFDocument.cs",
+              "ToolTip": "C:\\Users\\tguiv\\source\\repos\\qif-community2\\bindings\\CSharp\\QIFdotNET\\QIFDocument.cs",
+              "RelativeToolTip": "QIFdotNET\\QIFDocument.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAADwvwAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-10-14T20:34:39.83Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Form1.Designer.cs",
+              "DocumentMoniker": "C:\\Users\\tguiv\\source\\repos\\qif-community2\\bindings\\CSharp\\QIFdotNET\\Form1.Designer.cs",
+              "RelativeDocumentMoniker": "QIFdotNET\\Form1.Designer.cs",
+              "ToolTip": "C:\\Users\\tguiv\\source\\repos\\qif-community2\\bindings\\CSharp\\QIFdotNET\\Form1.Designer.cs",
+              "RelativeToolTip": "QIFdotNET\\Form1.Designer.cs",
+              "ViewState": "AgIAABAAAAAAAAAAAAA3wAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-10-14T20:34:21.272Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\tguiv\\source\\repos\\qif-community2\\bindings\\CSharp\\QIFdotNET\\Program.cs",
+              "RelativeDocumentMoniker": "QIFdotNET\\Program.cs",
+              "ToolTip": "C:\\Users\\tguiv\\source\\repos\\qif-community2\\bindings\\CSharp\\QIFdotNET\\Program.cs",
+              "RelativeToolTip": "QIFdotNET\\Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAqwA4AAAAaAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-10-14T17:40:59.69Z"
+            }
+          ]
+        },
+        {
+          "DockedWidth": 151,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Characteristic.cs",
+              "DocumentMoniker": "C:\\Users\\tguiv\\source\\repos\\qif-community2\\bindings\\CSharp\\QIFdotNET\\Characteristic.cs",
+              "RelativeDocumentMoniker": "QIFdotNET\\Characteristic.cs",
+              "ToolTip": "C:\\Users\\tguiv\\source\\repos\\qif-community2\\bindings\\CSharp\\QIFdotNET\\Characteristic.cs",
+              "RelativeToolTip": "QIFdotNET\\Characteristic.cs",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAAwDgAAAAeAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-10-14T17:41:37.328Z",
+              "EditorCaption": ""
             }
           ]
         }
